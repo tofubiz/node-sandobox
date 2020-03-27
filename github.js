@@ -162,6 +162,11 @@ const getPR = async (pullNumber) => {
 const mergeAndCreateRelease = async () => {
     const releases = await getReleases();
 
+    const latestReleaseTag = releases[0].tag_name;
+    const latestReleaseTagSplitted = latestReleaseTag.split(".");
+    const minorVersion = latestReleaseTagSplitted.pop();
+    const recommendedVersion = latestReleaseTagSplitted.concat(Number(minorVersion) + 1).join(".");
+
     // TODO merge blockだからダメ
 
     const prs = await getPRs();
@@ -186,7 +191,7 @@ const mergeAndCreateRelease = async () => {
     }));
 
     const prDetail = await getPR(pr.number);
-    if(!prDetail.mergeable){
+    if (!prDetail.mergeable) {
         console.log("mergeableじゃないみたいです");
         process.exit(0);
         return;
@@ -201,13 +206,13 @@ const mergeAndCreateRelease = async () => {
         type: 'text',
         name: 'tagName',
         message: 'タグ名',
-        initial: "" // TODO 自動で入れたい
+        initial: recommendedVersion
     }));
     const {name} = await prompts(({
         type: 'text',
         name: 'name',
         message: `リリース名`,
-        initial: jiraIssue ? `[${jiraNoMaybe}] ${jiraIssue.summaryText}` : pr.title
+        initial: `[Merge block] ${jiraIssue ? `[${jiraNoMaybe}] ${jiraIssue.summaryText}` : pr.title}`
     }));
     const {body} = await prompts(({
         type: 'text',
@@ -219,7 +224,7 @@ const mergeAndCreateRelease = async () => {
         type: 'toggle',
         name: 'draft',
         message: "draft？",
-        initial: true,
+        initial: false,
         active: 'True',
         inactive: 'False'
     }));
@@ -243,20 +248,20 @@ const mergeAndCreateRelease = async () => {
     console.log(releaseData);
     const {yes} = await prompts(({
         type: 'toggle',
-        name: 'prerelease',
+        name: 'yes',
         message: "これでマージしてからリリース作ります",
         initial: true,
         active: 'yes',
         inactive: 'no'
     }));
+    console.log(yes);
     if (!yes) {
         process.exit(0);
         return;
     }
-    console.log(yes);
-    // await mergePR(pr.number);
-    // const release = await createRelease(releaseData);
-    // console.log(release)
+    await mergePR(pr.number);
+    const release = await createRelease(releaseData);
+    console.log(release.url)
 };
 
 const main = async () => {
