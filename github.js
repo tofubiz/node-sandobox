@@ -212,7 +212,7 @@ const mergeAndCreateRelease = async () => {
         type: 'text',
         name: 'name',
         message: `リリース名`,
-        initial: `[Merge block] ${jiraIssue ? `[${jiraNoMaybe}] ${jiraIssue.summaryText}` : pr.title}`
+        initial: `${jiraIssue ? `[${jiraNoMaybe}] ${jiraIssue.summaryText}` : pr.title}`
     }));
     const {body} = await prompts(({
         type: 'text',
